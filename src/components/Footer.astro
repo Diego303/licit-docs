@@ -1,0 +1,46 @@
+---
+interface Props {
+  t: {
+    meta: string;
+  };
+}
+
+const { t } = Astro.props;
+---
+
+<footer>
+  <div class="container">
+    <div class="foot-logo">licit<span class="red">.</span></div>
+    <div class="foot-meta">{t.meta}</div>
+  </div>
+</footer>
+
+<style>
+  footer {
+    padding: 32px 0;
+  }
+
+  footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .foot-logo {
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .foot-logo .red {
+    color: var(--red);
+  }
+
+  .foot-meta {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 11px;
+    color: var(--g4);
+    letter-spacing: 0.5px;
+  }
+</style>

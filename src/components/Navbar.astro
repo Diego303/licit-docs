@@ -1,0 +1,295 @@
+---
+import type { Locale } from '../i18n/translations';
+import { getAlternateUrl, getDocsUrl, getLandingUrl } from '../i18n/utils';
+
+interface Props {
+  t: {
+    features: string;
+    frameworks: string;
+    docs: string;
+    github: string;
+  };
+  lang: Locale;
+}
+
+const { t, lang } = Astro.props;
+const esUrl = getAlternateUrl(Astro.url, 'es');
+const enUrl = getAlternateUrl(Astro.url, 'en');
+const landing = getLandingUrl(lang);
+const docsUrl = getDocsUrl(lang);
+---
+
+<nav>
+  <div class="container">
+    <div class="nav-left">
+      <a href={landing} class="logo">
+        <svg class="logo-icon" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,2 30,16 16,30 2,16" fill="none" stroke="#FF0000" stroke-width="3"/>
+        </svg>
+        licit<span class="red">.</span>
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href={`${landing}#features`}>{t.features}</a></li>
+        <li><a href={`${landing}#frameworks`}>{t.frameworks}</a></li>
+        <li><a href={docsUrl}>{t.docs}</a></li>
+        <li><a href="https://github.com/Diego303/licit-cli" class="accent">{t.github}</a></li>
+      </ul>
+      <div class="lang-switcher">
+        <a href={esUrl} class:list={[{ active: lang === 'es' }]}>ES</a>
+        <span class="sep">|</span>
+        <a href={enUrl} class:list={[{ active: lang === 'en' }]}>EN</a>
+      </div>
+    </div>
+
+    <button class="hamburger" aria-label="Menu" aria-expanded="false">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+  </div>
+
+  <div class="mobile-menu">
+    <div class="container">
+      <ul class="mobile-links">
+        <li><a href={`${landing}#features`}>{t.features}</a></li>
+        <li><a href={`${landing}#frameworks`}>{t.frameworks}</a></li>
+        <li><a href={docsUrl}>{t.docs}</a></li>
+        <li><a href="https://github.com/Diego303/licit-cli" class="accent">{t.github}</a></li>
+      </ul>
+      <div class="mobile-lang">
+        <a href={esUrl} class:list={[{ active: lang === 'es' }]}>ES</a>
+        <span class="sep">|</span>
+        <a href={enUrl} class:list={[{ active: lang === 'en' }]}>EN</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  function initHamburger() {
+    const btn = document.querySelector('.hamburger') as HTMLButtonElement;
+    const menu = document.querySelector('.mobile-menu') as HTMLElement;
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', () => {
+      const isOpen = btn.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(isOpen));
+      menu.classList.toggle('open');
+    });
+
+    menu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        btn.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('open');
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initHamburger);
+</script>
+
+<style>
+  nav {
+    padding: 20px 0;
+    border-bottom: 2px solid var(--black);
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  nav .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-decoration: none;
+  }
+
+  .logo .red {
+    color: var(--red);
+  }
+
+  .logo-icon {
+    flex-shrink: 0;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: baseline;
+    gap: 32px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--g3);
+    text-decoration: none;
+    letter-spacing: 0.2px;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover {
+    color: var(--black);
+  }
+
+  .nav-links a.accent {
+    color: var(--red);
+  }
+
+  .nav-links a.accent:hover {
+    color: var(--red-dim);
+  }
+
+  .lang-switcher,
+  .mobile-lang {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .lang-switcher a,
+  .mobile-lang a {
+    text-decoration: none;
+    color: var(--g4);
+    transition: color 0.15s;
+  }
+
+  .lang-switcher a:hover,
+  .mobile-lang a:hover {
+    color: var(--black);
+  }
+
+  .lang-switcher a.active,
+  .mobile-lang a.active {
+    color: var(--black);
+  }
+
+  .lang-switcher .sep,
+  .mobile-lang .sep {
+    color: var(--g5);
+  }
+
+  /* ── Hamburger button ── */
+
+  .hamburger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+  }
+
+  .hamburger-line {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--black);
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  .hamburger.open .hamburger-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .hamburger.open .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .hamburger.open .hamburger-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* ── Mobile menu ── */
+
+  .mobile-menu {
+    display: none;
+    border-top: 1px solid var(--g5);
+    padding: 24px 0;
+  }
+
+  .mobile-menu.open {
+    display: block;
+  }
+
+  .mobile-links {
+    list-style: none;
+    margin-bottom: 20px;
+  }
+
+  .mobile-links li {
+    border-bottom: 1px solid var(--g6);
+  }
+
+  .mobile-links a {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--g2);
+    text-decoration: none;
+    padding: 14px 0;
+    transition: color 0.15s;
+  }
+
+  .mobile-links a:hover {
+    color: var(--black);
+  }
+
+  .mobile-links a.accent {
+    color: var(--red);
+  }
+
+  .mobile-lang {
+    padding-top: 4px;
+  }
+
+  /* ── Responsive ── */
+
+  @media (max-width: 768px) {
+    .nav-right {
+      display: none;
+    }
+
+    .hamburger {
+      display: flex;
+    }
+
+    nav .container {
+      align-items: center;
+    }
+  }
+</style>

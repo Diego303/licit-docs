@@ -1,0 +1,31 @@
+---
+import { getCollection, render } from 'astro:content';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import { getTranslations } from '../../i18n/utils';
+import { getDocSlug, getLatestVersion } from '../../config/versions';
+
+export async function getStaticPaths() {
+  const allDocs = await getCollection('docs');
+  return allDocs.map((entry) => ({
+    params: { slug: getDocSlug(entry.id) },
+    props: { entry },
+  }));
+}
+
+const lang = 'es' as const;
+const t = getTranslations(lang);
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const latest = getLatestVersion();
+---
+
+<DocsLayout
+  title={`${entry.data.title} | Licit`}
+  description={entry.data.description}
+  lang={lang}
+  headings={headings}
+  versionLabel={latest.label}
+  t={t.docs_page}
+>
+  <Content />
+</DocsLayout>

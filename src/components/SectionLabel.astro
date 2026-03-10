@@ -1,0 +1,47 @@
+---
+interface Props {
+  num: string;
+  text: string;
+}
+
+const { num, text } = Astro.props;
+---
+
+<div class="section-label">
+  <span class="num">{num}</span>
+  <div class="line"></div>
+  <span class="text">{text}</span>
+</div>
+
+<style>
+  .section-label {
+    padding: 80px 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .num {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 2px;
+    flex-shrink: 0;
+  }
+
+  .line {
+    flex: 1;
+    height: 1px;
+    background: var(--g5);
+  }
+
+  .text {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--g3);
+    flex-shrink: 0;
+  }
+</style>

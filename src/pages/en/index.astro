@@ -1,0 +1,22 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Hero from '../../components/Hero.astro';
+import FeaturesSection from '../../components/FeaturesSection.astro';
+import FrameworksSection from '../../components/FrameworksSection.astro';
+import CtaSection from '../../components/CtaSection.astro';
+import Footer from '../../components/Footer.astro';
+import { getTranslations } from '../../i18n/utils';
+
+const lang = 'en' as const;
+const t = getTranslations(lang);
+---
+
+<Layout title={t.meta.title} description={t.meta.description} lang={lang}>
+  <Navbar t={t.nav} lang={lang} />
+  <Hero t={t.hero} lang={lang} />
+  <FeaturesSection t={t.features} />
+  <FrameworksSection t={t.frameworks} />
+  <CtaSection t={t.cta} lang={lang} />
+  <Footer t={t.footer} />
+</Layout>

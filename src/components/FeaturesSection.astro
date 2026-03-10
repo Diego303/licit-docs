@@ -1,0 +1,104 @@
+---
+import SectionLabel from './SectionLabel.astro';
+
+interface Props {
+  t: {
+    label: string;
+    items: Array<{
+      ref: string;
+      title: string;
+      desc: string;
+    }>;
+  };
+}
+
+const { t } = Astro.props;
+---
+
+<section class="features-section" id="features">
+  <div class="container">
+    <SectionLabel num="01" text={t.label} />
+    <div class="features-grid reveal">
+      {
+        t.items.map((item) => (
+          <div class="feature-item">
+            <div class="feature-ref">{item.ref}</div>
+            <h3>{item.title}</h3>
+            <p>{item.desc}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .features-section {
+    padding-bottom: 80px;
+    border-bottom: 2px solid var(--black);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 2px solid var(--black);
+  }
+
+  .feature-item {
+    padding: 36px 32px;
+    border-right: 1px solid var(--g5);
+    border-bottom: 1px solid var(--g5);
+    transition: background 0.15s;
+  }
+
+  .feature-item:nth-child(3n) {
+    border-right: none;
+  }
+
+  .feature-item:nth-child(n + 7) {
+    border-bottom: none;
+  }
+
+  .feature-item:hover {
+    background: var(--g7);
+  }
+
+  .feature-ref {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--red);
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--g3);
+    line-height: 1.55;
+  }
+
+  @media (max-width: 768px) {
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .feature-item {
+      border-right: none !important;
+      border-bottom: 1px solid var(--g5) !important;
+    }
+
+    .feature-item:last-child {
+      border-bottom: none !important;
+    }
+  }
+</style>
