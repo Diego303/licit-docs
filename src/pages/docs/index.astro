@@ -1,0 +1,192 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import DocCard from '../../components/DocCard.astro';
+import Footer from '../../components/Footer.astro';
+import { getTranslations, getDocUrl } from '../../i18n/utils';
+import { getLatestVersion, getDocSlug } from '../../config/versions';
+import { VERSIONS } from '../../config/versions';
+
+const lang = 'es' as const;
+const t = getTranslations(lang);
+const latest = getLatestVersion();
+
+const allDocs = await getCollection('docs');
+const docs = allDocs
+  .filter((doc) => doc.id.startsWith(latest.id + '/'))
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<Layout
+  title={`${t.docs_page.title} | Licit`}
+  description={t.meta.description}
+  lang={lang}
+>
+  <Navbar t={t.nav} lang={lang} />
+
+  <section class="docs-hub">
+    <div class="container">
+      <h1>{t.docs_page.title}</h1>
+      <p class="docs-subtitle">{t.docs_page.subtitle}</p>
+
+      <div class="docs-controls">
+        <div class="search-box">
+          <input
+            type="text"
+            class="doc-search-input"
+            placeholder={t.docs_page.search_placeholder}
+          />
+        </div>
+        <div class="version-box">
+          <label class="version-label">{t.docs_page.version_label}</label>
+          <select class="version-select">
+            {
+              VERSIONS.map((v) => (
+                <option value={v.id} selected={v.latest}>
+                  {v.label}
+                </option>
+              ))
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="docs-grid">
+        {
+          docs.map((doc) => {
+            const slug = getDocSlug(doc.id);
+            return (
+              <DocCard
+                title={doc.data.title}
+                description={doc.data.description}
+                href={getDocUrl(lang, slug)}
+                readMore={t.docs_page.read_more}
+              />
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  <Footer t={t.footer} />
+</Layout>
+
+<script>
+  const input = document.querySelector('.doc-search-input') as HTMLInputElement;
+  const cards = document.querySelectorAll('.doc-card') as NodeListOf<HTMLElement>;
+
+  input?.addEventListener('input', () => {
+    const query = input.value.toLowerCase();
+    cards.forEach((card) => {
+      const text = card.getAttribute('data-search')?.toLowerCase() ?? '';
+      card.style.display = text.includes(query) ? '' : 'none';
+    });
+  });
+</script>
+
+<style>
+  .docs-hub {
+    padding-bottom: 80px;
+    border-bottom: 2px solid var(--black);
+    min-height: calc(100vh - 200px);
+  }
+
+  h1 {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-top: 64px;
+    margin-bottom: 8px;
+  }
+
+  .docs-subtitle {
+    font-size: 16px;
+    color: var(--g3);
+    margin-bottom: 40px;
+  }
+
+  .docs-controls {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 32px;
+    align-items: flex-end;
+  }
+
+  .search-box {
+    flex: 1;
+  }
+
+  .doc-search-input {
+    width: 100%;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    padding: 14px 20px;
+    border: 2px solid var(--black);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .doc-search-input:focus {
+    border-color: var(--red);
+  }
+
+  .doc-search-input::placeholder {
+    color: var(--g4);
+  }
+
+  .version-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .version-label {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--g4);
+    margin-bottom: 6px;
+  }
+
+  .version-select {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 14px 20px;
+    border: 2px solid var(--black);
+    background: var(--bg);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+  }
+
+  .docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .docs-controls {
+      flex-direction: column;
+    }
+
+    .docs-grid {
+      grid-template-columns: 1fr;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-top: 40px;
+    }
+  }
+</style>

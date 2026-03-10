@@ -1,0 +1,150 @@
+---
+import SectionLabel from './SectionLabel.astro';
+
+interface Props {
+  t: {
+    label: string;
+    col_framework: string;
+    col_coverage: string;
+    col_status: string;
+    items: Array<{
+      name: string;
+      scope: string;
+      badge: string;
+      active: boolean;
+    }>;
+  };
+}
+
+const { t } = Astro.props;
+---
+
+<section class="fw-section" id="frameworks">
+  <div class="container">
+    <SectionLabel num="02" text={t.label} />
+    <div class="fw-table reveal">
+      <div class="fw-row head">
+        <div>{t.col_framework}</div>
+        <div>{t.col_coverage}</div>
+        <div>{t.col_status}</div>
+      </div>
+      {
+        t.items.map((item) => (
+          <div class="fw-row">
+            <div class="fw-name">{item.name}</div>
+            <div class="fw-scope">{item.scope}</div>
+            <div>
+              <span class={item.active ? 'badge-on' : 'badge-off'}>
+                {item.badge}
+              </span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .fw-section {
+    padding-bottom: 80px;
+    border-bottom: 2px solid var(--black);
+  }
+
+  .fw-table {
+    border: 2px solid var(--black);
+  }
+
+  .fw-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 100px;
+    border-bottom: 1px solid var(--g5);
+  }
+
+  .fw-row:last-child {
+    border-bottom: none;
+  }
+
+  .fw-row.head {
+    background: var(--black);
+    color: var(--bg);
+    border-bottom: 2px solid var(--black);
+  }
+
+  .fw-row > div {
+    padding: 16px 20px;
+    font-size: 14px;
+    border-right: 1px solid var(--g5);
+  }
+
+  .fw-row.head > div {
+    border-right: 1px solid #333;
+  }
+
+  .fw-row > div:last-child {
+    border-right: none;
+    text-align: center;
+  }
+
+  .fw-row.head > div {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .fw-name {
+    font-weight: 700;
+  }
+
+  .fw-scope {
+    color: var(--g3);
+  }
+
+  .badge-on {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--red);
+  }
+
+  .badge-off {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 11px;
+    color: var(--g4);
+  }
+
+  @media (max-width: 700px) {
+    .fw-row {
+      grid-template-columns: 1fr;
+      border-bottom: 1px solid var(--g5);
+    }
+
+    .fw-row:last-child {
+      border-bottom: none;
+    }
+
+    .fw-row.head {
+      display: none;
+    }
+
+    .fw-row > div {
+      border-right: none;
+      padding: 8px 20px;
+    }
+
+    .fw-row > div:first-child {
+      padding-top: 16px;
+    }
+
+    .fw-row > div:last-child {
+      text-align: left;
+      padding-bottom: 16px;
+    }
+
+    .fw-name {
+      font-size: 16px;
+    }
+  }
+</style>

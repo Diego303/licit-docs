@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>licit — Regulatory Compliance for AI-Generated Code</title>
+<meta name="description" content="licit is a standalone CLI that tracks AI code provenance, evaluates compliance against EU AI Act & OWASP, and generates regulatory documentation. Open source, zero infrastructure.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Overpass+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════ */
+:root {
+  --bg: #FFFFFF;
+  --bg-alt: #F7F7F7;
+  --black: #000000;
+  --g1: #111111;
+  --g2: #333333;
+  --g3: #666666;
+  --g4: #999999;
+  --g5: #CCCCCC;
+  --g6: #E8E8E8;
+  --g7: #F2F2F2;
+  --red: #FF0000;
+  --red-dim: #CC0000;
+  --red-bg: rgba(255,0,0,0.04);
+  --green: #00A63D;
+  --green-bg: rgba(0,166,61,0.06);
+}
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--black);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 400;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--red); color: white; }
+
+a { color: inherit; }
+
+code {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 0.88em;
+  background: var(--g7);
+  padding: 2px 6px;
+  border: 1px solid var(--g6);
+}
+
+.container { max-width: 1120px; margin: 0 auto; padding: 0 48px; }
+
+@media (max-width: 768px) {
+  .container { padding: 0 24px; }
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════ */
+nav {
+  padding: 20px 0;
+  border-bottom: 2px solid var(--black);
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+}
+nav .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.nav-left { display: flex; align-items: baseline; gap: 32px; }
+.logo {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.logo .red { color: var(--red); }
+.nav-version {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--g4);
+  letter-spacing: 1px;
+}
+.nav-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--g3);
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--black); }
+.nav-links a.accent { color: var(--red); }
+.nav-links a.accent:hover { color: var(--red-dim); }
+
+@media (max-width: 768px) {
+  nav .container { flex-direction: column; gap: 12px; }
+  .nav-links { gap: 20px; flex-wrap: wrap; }
+}
+
+/* ═══════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════ */
+.hero {
+  padding: 100px 0 80px;
+  border-bottom: 2px solid var(--black);
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 80px;
+  align-items: end;
+}
+.hero h1 {
+  font-size: 68px;
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -3px;
+  margin-bottom: 28px;
+}
+.hero h1 .red-line {
+  display: block;
+  color: var(--red);
+}
+.hero-sub {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--g3);
+  line-height: 1.65;
+  max-width: 500px;
+  margin-bottom: 36px;
+}
+.hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  font-family: 'Overpass Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 14px 28px;
+  text-decoration: none;
+  transition: all 0.12s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.btn-black {
+  background: var(--black);
+  color: var(--bg);
+  border-color: var(--black);
+}
+.btn-black:hover { background: var(--red); border-color: var(--red); }
+.btn-outline {
+  background: var(--bg);
+  color: var(--black);
+  border-color: var(--black);
+}
+.btn-outline:hover { color: var(--red); border-color: var(--red); }
+
+/* Hero metrics */
+.hero-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.metric {
+  padding: 28px;
+  border: 1px solid var(--g5);
+}
+.metric-num {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.metric-num.red { color: var(--red); }
+.metric-label {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--g4);
+}
+
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+  .hero h1 { font-size: 48px; letter-spacing: -2px; }
+  .hero-metrics { max-width: 400px; }
+}
+
+/* ═══════════════════════════════════════════
+   SECTION LABELS
+   ═══════════════════════════════════════════ */
+.section-label {
+  padding: 80px 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.section-label .num {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+.section-label .line { flex: 1; height: 1px; background: var(--g5); }
+.section-label .text {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--g3);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════
+   PROBLEM SECTION
+   ═══════════════════════════════════════════ */
+.problem-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border: 2px solid var(--black);
+}
+.problem-item {
+  padding: 36px 32px;
+  border-right: 1px solid var(--g5);
+  position: relative;
+}
+.problem-item:last-child { border-right: none; }
+.problem-num {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--g6);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.problem-item h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+.problem-item p {
+  font-size: 14px;
+  color: var(--g3);
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .problem-grid { grid-template-columns: 1fr; }
+  .problem-item { border-right: none; border-bottom: 1px solid var(--g5); }
+  .problem-item:last-child { border-bottom: none; }
+}
+
+/* ═══════════════════════════════════════════
+   HOW IT WORKS (WORKFLOW)
+   ═══════════════════════════════════════════ */
+.workflow-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 2px solid var(--black);
+  counter-reset: step;
+}
+.workflow-step {
+  padding: 32px 28px;
+  border-right: 1px solid var(--g5);
+  position: relative;
+  counter-increment: step;
+}
+.workflow-step:last-child { border-right: none; }
+.workflow-step::before {
+  content: counter(step);
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  background: var(--red);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.workflow-step h4 {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.workflow-step .cmd {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 12px;
+  color: var(--red);
+  margin-bottom: 12px;
+}
+.workflow-step p { font-size: 13px; color: var(--g3); line-height: 1.5; }
+
+/* Arrow between steps */
+.workflow-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--g5);
+  z-index: 2;
+  background: var(--bg);
+  padding: 4px 0;
+}
+
+@media (max-width: 900px) {
+  .workflow-steps { grid-template-columns: 1fr 1fr; }
+  .workflow-step:nth-child(2) { border-right: none; }
+  .workflow-step:nth-child(2)::after { display: none; }
+  .workflow-step:nth-child(1), .workflow-step:nth-child(2) { border-bottom: 1px solid var(--g5); }
+}
+@media (max-width: 500px) {
+  .workflow-steps { grid-template-columns: 1fr; }
+  .workflow-step { border-right: none; border-bottom: 1px solid var(--g5); }
+  .workflow-step:last-child { border-bottom: none; }
+  .workflow-step::after { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════
+   TERMINAL / CODE BLOCK
+   ═══════════════════════════════════════════ */
+.terminal-section {
+  border-bottom: 2px solid var(--black);
+}
+.terminal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.terminal-left {
+  padding: 64px 48px 64px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.terminal-left h2 {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 16px;
+  line-height: 1.05;
+}
+.terminal-left p {
+  font-size: 16px;
+  color: var(--g3);
+  line-height: 1.65;
+  margin-bottom: 28px;
+  max-width: 420px;
+}
+.install-box {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 16px 24px;
+  background: var(--g7);
+  border: 2px solid var(--black);
+  display: inline-block;
+}
+.install-box .dollar { color: var(--red); margin-right: 4px; }
+
+.terminal-right {
+  padding: 48px;
+  background: var(--black);
+  color: white;
+  font-family: 'Overpass Mono', monospace;
+  font-size: 13px;
+  line-height: 2;
+  border-left: 2px solid var(--black);
+  overflow-x: auto;
+}
+.terminal-right .pr { color: var(--red); }
+.terminal-right .g { color: #4ADE80; }
+.terminal-right .w { color: #FBBF24; }
+.terminal-right .r { color: #F87171; }
+.terminal-right .d { color: #666; }
+.terminal-right .comment { color: #555; font-style: italic; }
+
+@media (max-width: 768px) {
+  .terminal-grid { grid-template-columns: 1fr; }
+  .terminal-left { padding: 48px 0; }
+  .terminal-right { border-left: none; border-top: 2px solid var(--black); padding: 32px 24px; font-size: 12px; }
+}
+
+/* ═══════════════════════════════════════════
+   FEATURES GRID
+   ═══════════════════════════════════════════ */
+.features-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border: 2px solid var(--black);
+}
+.feature-item {
+  padding: 36px 32px;
+  border-right: 1px solid var(--g5);
+  border-bottom: 1px solid var(--g5);
+  transition: background 0.15s;
+}
+.feature-item:nth-child(3n) { border-right: none; }
+.feature-item:nth-child(n+7) { border-bottom: none; }
+.feature-item:hover { background: var(--g7); }
+.feature-ref {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--red);
+  margin-bottom: 16px;
+}
+.feature-item h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.feature-item p {
+  font-size: 14px;
+  color: var(--g3);
+  line-height: 1.55;
+}
+
+@media (max-width: 768px) {
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-item { border-right: none !important; border-bottom: 1px solid var(--g5) !important; }
+  .feature-item:last-child { border-bottom: none !important; }
+}
+
+/* ═══════════════════════════════════════════
+   CLI COMMANDS TABLE
+   ═══════════════════════════════════════════ */
+.cli-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.cli-table {
+  border: 2px solid var(--black);
+  width: 100%;
+}
+.cli-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  border-bottom: 1px solid var(--g5);
+}
+.cli-row:last-child { border-bottom: none; }
+.cli-row.head {
+  background: var(--black);
+  color: var(--bg);
+  border-bottom: 2px solid var(--black);
+}
+.cli-row > div {
+  padding: 14px 20px;
+  font-size: 14px;
+}
+.cli-row > div:first-child {
+  border-right: 1px solid var(--g5);
+}
+.cli-row.head > div:first-child {
+  border-right: 1px solid #333;
+}
+.cli-row.head > div {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.cli-cmd {
+  font-family: 'Overpass Mono', monospace;
+  font-weight: 600;
+  font-size: 14px;
+}
+.cli-desc { color: var(--g2); }
+
+@media (max-width: 600px) {
+  .cli-row { grid-template-columns: 1fr; }
+  .cli-row > div:first-child { border-right: none; border-bottom: 1px solid var(--g6); padding-bottom: 8px; }
+  .cli-row > div:last-child { padding-top: 8px; }
+}
+
+/* ═══════════════════════════════════════════
+   FRAMEWORKS TABLE
+   ═══════════════════════════════════════════ */
+.fw-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.fw-table {
+  border: 2px solid var(--black);
+}
+.fw-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 100px;
+  border-bottom: 1px solid var(--g5);
+}
+.fw-row:last-child { border-bottom: none; }
+.fw-row.head {
+  background: var(--black);
+  color: var(--bg);
+  border-bottom: 2px solid var(--black);
+}
+.fw-row > div {
+  padding: 16px 20px;
+  font-size: 14px;
+  border-right: 1px solid var(--g5);
+}
+.fw-row.head > div { border-right: 1px solid #333; }
+.fw-row > div:last-child { border-right: none; text-align: center; }
+.fw-row.head > div {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.fw-name { font-weight: 700; }
+.fw-scope { color: var(--g3); }
+.badge-on {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red);
+}
+.badge-off {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  color: var(--g4);
+}
+
+@media (max-width: 700px) {
+  .fw-row { grid-template-columns: 140px 1fr 70px; }
+}
+
+/* ═══════════════════════════════════════════
+   DIFFERENTIATORS
+   ═══════════════════════════════════════════ */
+.diff-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 2px solid var(--black);
+}
+.diff-item {
+  padding: 36px 32px;
+  border-right: 1px solid var(--g5);
+  border-bottom: 1px solid var(--g5);
+}
+.diff-item:nth-child(2n) { border-right: none; }
+.diff-item:nth-child(n+5) { border-bottom: none; }
+.diff-num {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.diff-item h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.diff-item p { font-size: 14px; color: var(--g3); line-height: 1.55; }
+
+@media (max-width: 600px) {
+  .diff-grid { grid-template-columns: 1fr; }
+  .diff-item { border-right: none !important; border-bottom: 1px solid var(--g5) !important; }
+  .diff-item:last-child { border-bottom: none !important; }
+}
+
+/* ═══════════════════════════════════════════
+   AGENT DETECTION SHOWCASE
+   ═══════════════════════════════════════════ */
+.detection-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.detection-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 2px solid var(--black);
+}
+.detection-text {
+  padding: 40px 36px;
+}
+.detection-text h3 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+.detection-text p {
+  font-size: 15px;
+  color: var(--g3);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag-item {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border: 1px solid var(--g5);
+  color: var(--g2);
+  background: var(--g7);
+}
+.tag-item.red-tag {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-bg);
+}
+
+.detection-list {
+  padding: 0;
+  background: var(--g7);
+  border-left: 2px solid var(--black);
+}
+.detect-group {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--g5);
+}
+.detect-group:last-child { border-bottom: none; }
+.detect-group-title {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--red);
+  margin-bottom: 10px;
+}
+.detect-files {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 13px;
+  color: var(--g2);
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .detection-layout { grid-template-columns: 1fr; }
+  .detection-list { border-left: none; border-top: 2px solid var(--black); }
+}
+
+/* ═══════════════════════════════════════════
+   ROADMAP
+   ═══════════════════════════════════════════ */
+.roadmap-section {
+  padding-bottom: 80px;
+  border-bottom: 2px solid var(--black);
+}
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border: 2px solid var(--black);
+}
+.roadmap-col {
+  padding: 32px 28px;
+  border-right: 1px solid var(--g5);
+}
+.roadmap-col:last-child { border-right: none; }
+.roadmap-version {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.roadmap-version.current { color: var(--red); }
+.roadmap-version.planned { color: var(--g4); }
+.roadmap-timeline {
+  font-size: 13px;
+  color: var(--g4);
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--g6);
+}
+.roadmap-list {
+  list-style: none;
+  font-size: 13px;
+  color: var(--g2);
+  line-height: 1.8;
+}
+.roadmap-list li::before {
+  content: '—';
+  color: var(--g5);
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .roadmap-grid { grid-template-columns: 1fr; }
+  .roadmap-col { border-right: none; border-bottom: 1px solid var(--g5); }
+  .roadmap-col:last-child { border-bottom: none; }
+}
+
+/* ═══════════════════════════════════════════
+   CTA SECTION
+   ═══════════════════════════════════════════ */
+.cta-section {
+  background: var(--black);
+  color: var(--bg);
+  padding: 80px 0;
+  border-bottom: 2px solid var(--black);
+}
+.cta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.cta-grid h2 {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  margin-bottom: 16px;
+}
+.cta-grid h2 .accent { color: var(--red); }
+.cta-grid p {
+  font-size: 16px;
+  color: #999;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+.btn-red {
+  background: var(--red);
+  color: white;
+  border-color: var(--red);
+}
+.btn-red:hover { background: var(--red-dim); border-color: var(--red-dim); }
+.btn-white-outline {
+  background: transparent;
+  color: white;
+  border-color: #444;
+}
+.btn-white-outline:hover { border-color: white; }
+
+.cta-code {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 14px;
+  line-height: 2;
+  color: #888;
+}
+.cta-code .pr { color: var(--red); }
+.cta-code .g { color: #4ADE80; }
+.cta-code .w { color: white; }
+
+@media (max-width: 768px) {
+  .cta-grid { grid-template-columns: 1fr; gap: 40px; }
+  .cta-grid h2 { font-size: 32px; }
+}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════ */
+footer {
+  padding: 32px 0;
+}
+footer .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.foot-logo {
+  font-size: 18px;
+  font-weight: 800;
+}
+.foot-logo .red { color: var(--red); }
+.foot-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+.foot-links a {
+  font-size: 13px;
+  color: var(--g3);
+  text-decoration: none;
+}
+.foot-links a:hover { color: var(--black); }
+.foot-meta {
+  font-family: 'Overpass Mono', monospace;
+  font-size: 11px;
+  color: var(--g4);
+  letter-spacing: 0.5px;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero { animation: fadeIn 0.5s ease-out; }
+
+/* Scroll-triggered reveals */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════ -->
+<nav>
+  <div class="container">
+    <div class="nav-left">
+      <a href="#" class="logo">licit<span class="red">.</span></a>
+      <span class="nav-version">v0.1.0</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#cli">CLI</a></li>
+      <li><a href="#frameworks">Frameworks</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#" class="accent">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <h1>Compliance<br>for AI&#8209;generated<br><span class="red-line">code.</span></h1>
+        <p class="hero-sub">licit tracks who wrote what — human or AI — evaluates your project against the EU AI Act and OWASP Agentic Top 10, and generates the regulatory documentation your organization needs. One CLI. Zero infrastructure.</p>
+        <div class="hero-btns">
+          <a href="#start" class="btn btn-black">Get Started</a>
+          <a href="#cli" class="btn btn-outline">CLI Reference</a>
+        </div>
+      </div>
+      <div class="hero-metrics">
+        <div class="metric">
+          <div class="metric-num red">10</div>
+          <div class="metric-label">CLI Commands</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num">11</div>
+          <div class="metric-label">EU AI Act Articles</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num">10</div>
+          <div class="metric-label">OWASP Controls</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num red">0</div>
+          <div class="metric-label">External Deps</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PROBLEM
+     ═══════════════════════════════════════════ -->
+<section class="problem-section">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">01</span>
+      <div class="line"></div>
+      <span class="text">The Problem</span>
+    </div>
+    <div class="problem-grid reveal">
+      <div class="problem-item">
+        <div class="problem-num">01</div>
+        <h3>No provenance</h3>
+        <p>Up to 40% of new enterprise code is AI-generated. Organizations can't systematically trace which lines were written by humans, by AI, or a mix of both — creating liability, IP, and risk management gaps.</p>
+      </div>
+      <div class="problem-item">
+        <div class="problem-num">02</div>
+        <h3>Regulation is here</h3>
+        <p>The EU AI Act (2024/1689) requires impact assessments, technical documentation, risk management systems, and transparency. Generating these documents manually is costly, slow, and error-prone.</p>
+      </div>
+      <div class="problem-item">
+        <div class="problem-num">03</div>
+        <h3>Agent security risks</h3>
+        <p>AI coding agents operate with elevated permissions and can introduce vulnerabilities. The OWASP Agentic Top 10 identifies risks that traditional security scanners were never designed to detect.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     HOW IT WORKS
+     ═══════════════════════════════════════════ -->
+<section class="workflow-section">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">02</span>
+      <div class="line"></div>
+      <span class="text">How It Works</span>
+    </div>
+    <div class="workflow-steps reveal">
+      <div class="workflow-step">
+        <h4>Detect</h4>
+        <div class="cmd">licit init</div>
+        <p>Auto-detects languages, frameworks, CI/CD, agent configs, and git history. Creates <code>.licit.yaml</code>.</p>
+      </div>
+      <div class="workflow-step">
+        <h4>Trace</h4>
+        <div class="cmd">licit trace</div>
+        <p>Analyzes git history with 6 heuristics to infer AI authorship. Stores provenance in a signed, append-only JSONL log.</p>
+      </div>
+      <div class="workflow-step">
+        <h4>Evaluate</h4>
+        <div class="cmd">licit report</div>
+        <p>Assesses your project against EU AI Act articles and OWASP Agentic Top 10 controls. Outputs Markdown, JSON, or HTML.</p>
+      </div>
+      <div class="workflow-step">
+        <h4>Enforce</h4>
+        <div class="cmd">licit verify</div>
+        <p>Returns exit code 0 (pass) or 1 (fail). Drop it into GitHub Actions, GitLab CI, or any pipeline.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     TERMINAL SHOWCASE
+     ═══════════════════════════════════════════ -->
+<section class="terminal-section" id="start">
+  <div class="terminal-grid">
+    <div class="terminal-left">
+      <div class="container" style="padding-right:0;">
+        <h2>Running in<br>30 seconds.</h2>
+        <p>No accounts. No dashboards. No databases. No cloud. Just install, initialize, and start tracking compliance from your terminal.</p>
+        <div class="install-box"><span class="dollar">$</span> pip install licit-ai</div>
+      </div>
+    </div>
+    <div class="terminal-right">
+<span class="comment"># 1. Initialize — auto-detects everything</span>
+<span class="pr">$</span> licit init
+<span class="g">  ✓</span> <span class="d">Project:</span> my-saas-app
+<span class="g">  ✓</span> <span class="d">Languages:</span> python, typescript
+<span class="g">  ✓</span> <span class="d">Agent configs:</span> 3 detected
+<span class="g">  ✓</span> <span class="d">CI/CD:</span> github-actions
+<span class="g">  ✓</span> <span class="d">Created</span> .licit.yaml
+
+<span class="comment"># 2. Track who wrote what</span>
+<span class="pr">$</span> licit trace --stats
+  Total files:    372
+  AI-generated:   142 <span class="w">(38.2%)</span>
+  Human-written:  230 <span class="g">(61.8%)</span>
+
+<span class="comment"># 3. Find compliance gaps</span>
+<span class="pr">$</span> licit gaps --framework eu-ai-act
+<span class="r">  ✗ [ART-27-1]</span> FRIA not completed
+<span class="r">  ✗ [ANNEX-IV]</span> Technical docs missing
+<span class="d">  → Run:</span> licit fria
+<span class="d">  → Run:</span> licit annex-iv
+
+<span class="comment"># 4. CI/CD gate</span>
+<span class="pr">$</span> licit verify
+<span class="g">  ✓ 8 compliant</span>
+<span class="w">  ⚠ 3 partial</span>
+<span class="r">  ✗ 2 non-compliant</span>
+<span class="d">  exit code:</span> <span class="r">1</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FEATURES
+     ═══════════════════════════════════════════ -->
+<section class="features-section" id="features">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">03</span>
+      <div class="line"></div>
+      <span class="text">Capabilities</span>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feature-item">
+        <div class="feature-ref">Provenance</div>
+        <h3>Code origin tracking</h3>
+        <p>Six git heuristics analyze author patterns, commit messages, bulk changes, co-author trailers, file patterns, and timing to classify every file as human, AI, or mixed.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">Session Reader</div>
+        <h3>Claude Code integration</h3>
+        <p>Reads Claude Code session logs for high-fidelity provenance. Extensible protocol for adding Cursor, Codex, and Copilot readers in V1.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">Attestation</div>
+        <h3>Cryptographic signatures</h3>
+        <p>HMAC-SHA256 signatures and Merkle tree batch hashing provide tamper-evident provenance records. Sigstore integration planned for V1.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">Art. 27</div>
+        <h3>FRIA generator</h3>
+        <p>Interactive 5-step questionnaire covering system description, rights identification, impact assessment, mitigation, and monitoring. Auto-detects answers from your project.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">Annex IV</div>
+        <h3>Technical documentation</h3>
+        <p>Generates EU AI Act Annex IV documents auto-populated from pyproject.toml, package.json, CI/CD configs, agent configs, and test frameworks.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">Changelog</div>
+        <h3>Agent config monitoring</h3>
+        <p>Tracks changes in CLAUDE.md, .cursorrules, AGENTS.md, architect configs, and more. Classifies each change as MAJOR, MINOR, or PATCH.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">Evaluation</div>
+        <h3>Multi-framework audit</h3>
+        <p>Evaluates EU AI Act articles 9, 10, 12, 13, 14, 26, 27 and all OWASP Agentic Top 10 controls in a single pass with auto-collected evidence.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">Analysis</div>
+        <h3>Gap analyzer</h3>
+        <p>Identifies exactly which compliance requirements are missing, with specific recommendations, effort level (low/medium/high), and suggested tools per gap.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-ref">CI/CD</div>
+        <h3>Pipeline gate</h3>
+        <p><code>licit verify</code> returns exit code 0 (compliant), 1 (non-compliant), or 2 (partial). Block non-compliant deploys automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CLI COMMANDS
+     ═══════════════════════════════════════════ -->
+<section class="cli-section" id="cli">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">04</span>
+      <div class="line"></div>
+      <span class="text">CLI Reference</span>
+    </div>
+    <div class="cli-table reveal">
+      <div class="cli-row head">
+        <div>Command</div>
+        <div>Description</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit init</div>
+        <div class="cli-desc">Initialize project — auto-detects language, framework, CI/CD, agent configs, git history. Creates <code>.licit.yaml</code>.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit trace</div>
+        <div class="cli-desc">Run provenance analysis on git history and agent sessions. Stores results in append-only JSONL with optional cryptographic signing.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit changelog</div>
+        <div class="cli-desc">Generate a semantic changelog of agent configuration changes with MAJOR/MINOR/PATCH severity classification.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit fria</div>
+        <div class="cli-desc">Launch the interactive 5-step FRIA questionnaire (EU AI Act Art. 27). Auto-detects answers from project metadata.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit annex-iv</div>
+        <div class="cli-desc">Generate Annex IV technical documentation auto-populated from pyproject.toml, package.json, CI/CD, and agent configs.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit report</div>
+        <div class="cli-desc">Generate unified compliance report evaluating all configured frameworks. Outputs Markdown, JSON, or HTML.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit gaps</div>
+        <div class="cli-desc">Identify compliance gaps with actionable recommendations, effort estimates, and suggested tools per requirement.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit verify</div>
+        <div class="cli-desc">CI/CD gate — exit code 0 (compliant), 1 (non-compliant), 2 (partial). Drop into any pipeline.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit status</div>
+        <div class="cli-desc">Display current compliance status, connected data sources, active frameworks, and detected agent configs.</div>
+      </div>
+      <div class="cli-row">
+        <div class="cli-cmd">licit connect</div>
+        <div class="cli-desc">Configure optional connectors to enrich evidence — architect (reports/audit trail) and vigil (SARIF findings).</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     AGENT DETECTION
+     ═══════════════════════════════════════════ -->
+<section class="detection-section">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">05</span>
+      <div class="line"></div>
+      <span class="text">Auto-Detection</span>
+    </div>
+    <div class="detection-layout reveal">
+      <div class="detection-text">
+        <h3>Knows your project<br>from the first run</h3>
+        <p><code>licit init</code> scans your repository and automatically identifies languages, frameworks, CI/CD platforms, test suites, security tools, and every AI agent configuration file in your project.</p>
+        <p style="margin-bottom:20px;">Detected configurations feed directly into compliance evaluations — no manual setup.</p>
+        <div class="tag-list">
+          <span class="tag-item">Python</span>
+          <span class="tag-item">JavaScript</span>
+          <span class="tag-item">TypeScript</span>
+          <span class="tag-item">Go</span>
+          <span class="tag-item">Rust</span>
+          <span class="tag-item">Java</span>
+          <span class="tag-item red-tag">Language Agnostic</span>
+        </div>
+      </div>
+      <div class="detection-list">
+        <div class="detect-group">
+          <div class="detect-group-title">AI Agent Configs</div>
+          <div class="detect-files">
+            CLAUDE.md<br>
+            .cursorrules / .cursor/rules<br>
+            AGENTS.md / .github/agents/*.md<br>
+            .github/copilot-instructions.md<br>
+            .architect/config.yaml
+          </div>
+        </div>
+        <div class="detect-group">
+          <div class="detect-group-title">CI/CD Platforms</div>
+          <div class="detect-files">
+            .github/workflows/*.yml<br>
+            .gitlab-ci.yml<br>
+            Jenkinsfile<br>
+            .circleci/config.yml
+          </div>
+        </div>
+        <div class="detect-group">
+          <div class="detect-group-title">Security Tools</div>
+          <div class="detect-files">
+            vigil (.vigil.yaml)<br>
+            Semgrep (.semgrep.yml)<br>
+            Snyk (.snyk)<br>
+            CodeQL (.github/codeql)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FRAMEWORKS
+     ═══════════════════════════════════════════ -->
+<section class="fw-section" id="frameworks">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">06</span>
+      <div class="line"></div>
+      <span class="text">Regulatory Frameworks</span>
+    </div>
+    <div class="fw-table reveal">
+      <div class="fw-row head">
+        <div>Framework</div>
+        <div>Coverage</div>
+        <div>Status</div>
+      </div>
+      <div class="fw-row">
+        <div class="fw-name">EU AI Act</div>
+        <div class="fw-scope">Regulation 2024/1689 — Art. 9, 10, 12, 13, 14, 26, 27 + Annex IV</div>
+        <div><span class="badge-on">V0</span></div>
+      </div>
+      <div class="fw-row">
+        <div class="fw-name">OWASP Agentic</div>
+        <div class="fw-scope">Top 10 AI agent security risks — 2026 edition</div>
+        <div><span class="badge-on">V0</span></div>
+      </div>
+      <div class="fw-row">
+        <div class="fw-name">NIST AI RMF</div>
+        <div class="fw-scope">AI 100-1 risk management framework</div>
+        <div><span class="badge-off">V1</span></div>
+      </div>
+      <div class="fw-row">
+        <div class="fw-name">ISO/IEC 42001</div>
+        <div class="fw-scope">AI management system standard (2023)</div>
+        <div><span class="badge-off">V1</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     DIFFERENTIATORS
+     ═══════════════════════════════════════════ -->
+<section class="diff-section">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">07</span>
+      <div class="line"></div>
+      <span class="text">Why licit</span>
+    </div>
+    <div class="diff-grid reveal">
+      <div class="diff-item">
+        <div class="diff-num">01</div>
+        <h3>Developer-first</h3>
+        <p>A native CLI that integrates into existing workflows — git, CI/CD, your terminal. No dashboards, databases, or web interfaces required.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-num">02</div>
+        <h3>Fully standalone</h3>
+        <p>licit works alone. Connectors to architect, vigil, and other tools are optional enrichments, not requirements. Install and run immediately.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-num">03</div>
+        <h3>Provenance-first</h3>
+        <p>Unlike generic GRC tools, licit understands code. It knows which files were written by AI and uses that data for more precise compliance evaluations.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-num">04</div>
+        <h3>Multi-framework</h3>
+        <p>Evaluate against EU AI Act, OWASP, and soon NIST AI RMF and ISO 42001 — all in a single run, with a modular architecture for adding custom frameworks.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-num">05</div>
+        <h3>Language agnostic</h3>
+        <p>Detects and analyzes projects in Python, JavaScript, TypeScript, Go, Rust, and Java. Framework detection for FastAPI, Flask, Django, React, Next.js, Express.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-num">06</div>
+        <h3>Open source</h3>
+        <p>MIT licensed. No vendor lock-in, no enterprise paywalls. Audit the code, fork it, extend it. Compliance tooling should be transparent by definition.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     ROADMAP
+     ═══════════════════════════════════════════ -->
+<section class="roadmap-section" id="roadmap">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">08</span>
+      <div class="line"></div>
+      <span class="text">Roadmap</span>
+    </div>
+    <div class="roadmap-grid reveal">
+      <div class="roadmap-col">
+        <div class="roadmap-version current">V0 — MVP</div>
+        <div class="roadmap-timeline">Now</div>
+        <ul class="roadmap-list">
+          <li>Full CLI (10 commands)</li>
+          <li>EU AI Act evaluator</li>
+          <li>OWASP Agentic evaluator</li>
+          <li>Git provenance heuristics</li>
+          <li>Claude Code session reader</li>
+          <li>FRIA + Annex IV generators</li>
+          <li>Gap analyzer</li>
+          <li>CI/CD gate</li>
+          <li>Cryptographic attestation</li>
+          <li>Config changelog</li>
+        </ul>
+      </div>
+      <div class="roadmap-col">
+        <div class="roadmap-version planned">V1</div>
+        <div class="roadmap-timeline">4 – 6 weeks</div>
+        <ul class="roadmap-list">
+          <li>NIST AI RMF framework</li>
+          <li>ISO/IEC 42001 framework</li>
+          <li>Plugin system for custom frameworks</li>
+          <li>Cursor + Codex session readers</li>
+          <li>Sigstore attestation</li>
+          <li>GitHub Action</li>
+          <li>MCP Server</li>
+          <li>GitHub API connector</li>
+        </ul>
+      </div>
+      <div class="roadmap-col">
+        <div class="roadmap-version planned">V2</div>
+        <div class="roadmap-timeline">Future</div>
+        <ul class="roadmap-list">
+          <li>Web dashboard</li>
+          <li>Multi-project support</li>
+          <li>Trend analysis over time</li>
+          <li>AI-powered remediation</li>
+          <li>Enterprise GRC integration</li>
+          <li>Compliance-as-Code policies</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CTA
+     ═══════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-grid">
+      <div>
+        <h2>Start building<br>on <span class="accent">solid ground.</span></h2>
+        <p>Your code is already being shaped by AI. Now you can prove it's compliant. One install. One command. Full regulatory visibility.</p>
+        <div class="hero-btns">
+          <a href="#" class="btn btn-red">Read the Docs</a>
+          <a href="#" class="btn btn-white-outline">View on GitHub</a>
+        </div>
+      </div>
+      <div class="cta-code">
+<span class="pr">$</span> pip install licit-ai
+<span class="pr">$</span> <span class="w">cd</span> your-project/
+<span class="pr">$</span> licit init
+<span class="g">  ✓ Created .licit.yaml</span>
+<span class="pr">$</span> licit trace
+<span class="g">  ✓ 372 files analyzed</span>
+<span class="pr">$</span> licit report --format html
+<span class="g">  ✓ Report saved</span>
+<span class="pr">$</span> licit verify
+<span class="g">  ✓ All requirements met.</span>
+<span class="g">  exit code: 0</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="foot-logo">licit<span class="red">.</span></div>
+    <ul class="foot-links">
+      <li><a href="#">Documentation</a></li>
+      <li><a href="#">GitHub</a></li>
+      <li><a href="#">Changelog</a></li>
+    </ul>
+    <div class="foot-meta">MIT License · Python 3.12+ · Open Source</div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════
+     SCROLL REVEAL SCRIPT
+     ═══════════════════════════════════════════ -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => observer.observe(el));
+});
+</script>
+
+</body>
+</html>

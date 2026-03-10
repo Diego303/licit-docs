@@ -1,0 +1,129 @@
+---
+import type { Locale } from '../i18n/translations';
+import { getDocsUrl } from '../i18n/utils';
+
+interface Props {
+  t: {
+    title_line1: string;
+    title_line2: string;
+    desc: string;
+    btn_docs: string;
+    btn_github: string;
+  };
+  lang: Locale;
+}
+
+const { t, lang } = Astro.props;
+const docsUrl = getDocsUrl(lang);
+---
+
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-grid">
+      <div>
+        <h2>
+          {t.title_line1}<br />
+          <span class="accent">{t.title_line2}</span>
+        </h2>
+        <p>{t.desc}</p>
+        <div class="cta-btns">
+          <a href={docsUrl} class="btn btn-red">{t.btn_docs}</a>
+          <a href="https://github.com/Diego303/licit-cli" class="btn btn-white-outline">{t.btn_github}</a>
+        </div>
+      </div>
+      <div class="cta-code" set:html={`<span class="pr">$</span> pip install licit-ai-cli
+<span class="pr">$</span> <span class="w">cd</span> your-project/
+<span class="pr">$</span> licit init
+<span class="g">  &#10003; Created .licit.yaml</span>
+<span class="pr">$</span> licit trace
+<span class="g">  &#10003; 372 files analyzed</span>
+<span class="pr">$</span> licit report --format html
+<span class="g">  &#10003; Report saved</span>
+<span class="pr">$</span> licit verify
+<span class="g">  &#10003; All requirements met.</span>
+<span class="g">  exit code: 0</span>`} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta-section {
+    background: var(--black);
+    color: var(--bg);
+    padding: 80px 0;
+    border-bottom: 2px solid var(--black);
+  }
+
+  .cta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  h2 {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 16px;
+  }
+
+  .accent {
+    color: var(--red);
+  }
+
+  p {
+    font-size: 16px;
+    color: #999;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .cta-btns {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cta-code {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 14px;
+    line-height: 2;
+    color: #888;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .cta-code :global(.pr) {
+    color: var(--red);
+  }
+
+  .cta-code :global(.g) {
+    color: #4ade80;
+  }
+
+  .cta-code :global(.w) {
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .cta-section {
+      padding: 60px 0;
+    }
+
+    .cta-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    h2 {
+      font-size: 32px;
+      letter-spacing: -1px;
+    }
+
+    .cta-code {
+      font-size: 12px;
+    }
+  }
+</style>

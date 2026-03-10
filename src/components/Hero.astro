@@ -1,0 +1,176 @@
+---
+import type { Locale } from '../i18n/translations';
+import { getDocsUrl, getDocUrl } from '../i18n/utils';
+
+interface Props {
+  t: {
+    title_line1: string;
+    title_line2: string;
+    title_line3: string;
+    sub: string;
+    btn_docs: string;
+    btn_cli: string;
+    metrics: {
+      commands: { num: string; label: string };
+      articles: { num: string; label: string };
+      controls: { num: string; label: string };
+      deps: { num: string; label: string };
+    };
+  };
+  lang: Locale;
+}
+
+const { t, lang } = Astro.props;
+const docsUrl = getDocsUrl(lang);
+const cliUrl = getDocUrl(lang, 'cli-reference');
+---
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <h1>
+          {t.title_line1}<br />
+          {t.title_line2}<br />
+          <span class="red-line">{t.title_line3}</span>
+        </h1>
+        <p class="hero-sub">{t.sub}</p>
+        <div class="hero-btns">
+          <a href={docsUrl} class="btn btn-black">{t.btn_docs}</a>
+          <a href={cliUrl} class="btn btn-outline">{t.btn_cli}</a>
+        </div>
+      </div>
+      <div class="hero-metrics">
+        <div class="metric">
+          <div class="metric-num red">{t.metrics.commands.num}</div>
+          <div class="metric-label">{t.metrics.commands.label}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num">{t.metrics.articles.num}</div>
+          <div class="metric-label">{t.metrics.articles.label}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num">{t.metrics.controls.num}</div>
+          <div class="metric-label">{t.metrics.controls.label}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num red">{t.metrics.deps.num}</div>
+          <div class="metric-label">{t.metrics.deps.label}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding: 100px 0 80px;
+    border-bottom: 2px solid var(--black);
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    gap: 80px;
+    align-items: end;
+  }
+
+  h1 {
+    font-size: 68px;
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -3px;
+    margin-bottom: 28px;
+  }
+
+  .red-line {
+    display: block;
+    color: var(--red);
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--g3);
+    line-height: 1.65;
+    max-width: 500px;
+    margin-bottom: 36px;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .hero-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .metric {
+    padding: 28px;
+    border: 1px solid var(--g5);
+  }
+
+  .metric-num {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .metric-num.red {
+    color: var(--red);
+  }
+
+  .metric-label {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--g4);
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      padding: 64px 0 60px;
+    }
+
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+
+    h1 {
+      font-size: 48px;
+      letter-spacing: -2px;
+    }
+
+    .hero-metrics {
+      max-width: 400px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    h1 {
+      font-size: 36px;
+      letter-spacing: -1.5px;
+    }
+
+    .hero-sub {
+      font-size: 16px;
+    }
+
+    .metric {
+      padding: 20px;
+    }
+
+    .metric-num {
+      font-size: 32px;
+    }
+  }
+</style>

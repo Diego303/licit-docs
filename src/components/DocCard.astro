@@ -1,0 +1,55 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  readMore: string;
+}
+
+const { title, description, href, readMore } = Astro.props;
+---
+
+<a href={href} class="doc-card" data-search={`${title} ${description}`}>
+  <h3>{title}</h3>
+  <p>{description}</p>
+  <span class="doc-card-link">{readMore}</span>
+</a>
+
+<style>
+  .doc-card {
+    padding: 36px 32px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.15s;
+    border: 2px solid var(--black);
+  }
+
+  .doc-card:hover {
+    background: var(--g7);
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 12px;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--g3);
+    line-height: 1.6;
+    flex: 1;
+    margin-bottom: 16px;
+  }
+
+  .doc-card-link {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 1px;
+  }
+</style>
