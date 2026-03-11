@@ -10,16 +10,16 @@ order: 1
 
 | Documento | Descripción |
 |---|---|
-| [Inicio rápido](/licit-docs/docs/quick-start/) | Guía para tener licit funcionando en 5 minutos |
-| [Arquitectura](/licit-docs/docs/architecture/) | Arquitectura del sistema, módulos, fases y decisiones de diseño |
-| [Guía de CLI](/licit-docs/docs/cli-guide/) | Referencia completa de todos los comandos y opciones |
-| [Configuración](/licit-docs/docs/configuration/) | Guía de configuración de `.licit.yaml` con todos los campos |
-| [Modelos de datos](/licit-docs/docs/models/) | Enums, dataclasses y schemas Pydantic usados internamente |
-| [Seguridad](/licit-docs/docs/security/) | Modelo de amenazas, firmado criptográfico, protección de datos |
-| [Compliance](/licit-docs/docs/compliance/) | Marcos regulatorios soportados: EU AI Act y OWASP Agentic Top 10 |
-| [Buenas prácticas](/licit-docs/docs/best-practices/) | Recomendaciones para integrar licit en tu flujo de trabajo |
-| [Desarrollo](/licit-docs/docs/development/) | Guía para contribuidores: setup, testing, linting, convenciones |
-| [FAQ](/licit-docs/docs/faq/) | Preguntas frecuentes y resolución de problemas |
+| [Inicio rápido](/licit-docs/docs/v0-1-0/quick-start/) | Guía para tener licit funcionando en 5 minutos |
+| [Arquitectura](/licit-docs/docs/v0-1-0/architecture/) | Arquitectura del sistema, módulos, fases y decisiones de diseño |
+| [Guía de CLI](/licit-docs/docs/v0-1-0/cli-guide/) | Referencia completa de todos los comandos y opciones |
+| [Configuración](/licit-docs/docs/v0-1-0/configuration/) | Guía de configuración de `.licit.yaml` con todos los campos |
+| [Modelos de datos](/licit-docs/docs/v0-1-0/models/) | Enums, dataclasses y schemas Pydantic usados internamente |
+| [Seguridad](/licit-docs/docs/v0-1-0/security/) | Modelo de amenazas, firmado criptográfico, protección de datos |
+| [Compliance](/licit-docs/docs/v0-1-0/compliance/) | Marcos regulatorios soportados: EU AI Act y OWASP Agentic Top 10 |
+| [Buenas prácticas](/licit-docs/docs/v0-1-0/best-practices/) | Recomendaciones para integrar licit en tu flujo de trabajo |
+| [Desarrollo](/licit-docs/docs/v0-1-0/development/) | Guía para contribuidores: setup, testing, linting, convenciones |
+| [FAQ](/licit-docs/docs/v0-1-0/faq/) | Preguntas frecuentes y resolución de problemas |
 
 ## Inicio rápido
 

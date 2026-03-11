@@ -4,12 +4,13 @@ interface Props {
   description: string;
   href: string;
   readMore: string;
+  'data-version'?: string;
 }
 
-const { title, description, href, readMore } = Astro.props;
+const { title, description, href, readMore, 'data-version': dataVersion } = Astro.props;
 ---
 
-<a href={href} class="doc-card" data-search={`${title} ${description}`}>
+<a href={href} class="doc-card" data-search={`${title} ${description}`} data-version={dataVersion}>
   <h3>{title}</h3>
   <p>{description}</p>
   <span class="doc-card-link">{readMore}</span>

@@ -1,7 +1,7 @@
 ---
 title: "Data Models"
 description: "Enums, dataclasses, and Pydantic schemas used internally by licit."
-order: 8
+order: 6
 ---
 
 licit separates its models into two categories by design:
@@ -50,7 +50,7 @@ Method by which code provenance was determined.
 class ProvenanceSource(StrEnum):
     GIT_INFER   = "git-infer"     # Inferred by git heuristics
     SESSION_LOG = "session-log"   # Read from agent session logs
-    GIT_AI      = "git-ai"        # git-ai annotations
+    GIT_AI      = "git-ai"        # Annotations from git-ai
     MANUAL      = "manual"        # Manually annotated
     CONNECTOR   = "connector"     # Information from architect/vigil
 ```
@@ -68,7 +68,7 @@ Provenance record for a file or code fragment.
 ```python
 @dataclass
 class ProvenanceRecord:
-    file_path: str                              # Path to the file
+    file_path: str                              # Path to file
     source: str                                 # "ai", "human", "mixed"
     confidence: float                           # Confidence (0.0-1.0)
     method: ProvenanceSource                    # How it was determined
@@ -102,7 +102,7 @@ Detected change in an AI agent configuration file.
 ```python
 @dataclass
 class ConfigChange:
-    file_path: str               # Path to the config file
+    file_path: str               # Path to config file
     field_path: str              # Changed field: "model", "guardrails.protected_files"
     old_value: str | None        # Previous value
     new_value: str | None        # New value
@@ -198,6 +198,52 @@ class GapItem:
 
 ---
 
+## Provenance Models (Phase 2)
+
+### CommitInfo
+
+Parsed git commit with metadata for heuristic analysis.
+
+```python
+@dataclass
+class CommitInfo:
+    sha: str                     # Full commit SHA hash
+    author: str                  # Author name
+    author_email: str            # Author email
+    date: datetime               # Commit date
+    message: str                 # Commit subject
+    files_changed: list[str]     # Modified files
+    insertions: int              # Lines added
+    deletions: int               # Lines deleted
+    co_authors: list[str] = []   # Co-authors (extracted from body)
+```
+
+**Usage**: Produced by `GitAnalyzer._parse_git_log()`, consumed by `AICommitHeuristics.score_commit()`.
+
+### HeuristicResult
+
+Result of applying an individual heuristic to a commit.
+
+```python
+@dataclass
+class HeuristicResult:
+    name: str       # Identifier: "author_pattern", "message_pattern", etc.
+    score: float    # Contribution to final score (0.0-1.0)
+    weight: float   # Relative weight of this heuristic
+    reason: str     # Human-readable explanation of the result
+```
+
+**Usage**: Produced internally by each heuristic, aggregated in `score_commit()`.
+
+**Final score calculation**: Only heuristics with score > 0 (signaling) are averaged:
+```python
+signaling = [r for r in results if r.score > 0]
+total_weight = sum(r.weight for r in signaling)
+score = sum(r.score * r.weight for r in signaling) / total_weight
+```
+
+---
+
 ## Detection Models
 
 Used by `ProjectDetector` to describe the project context.
@@ -235,7 +281,7 @@ Detected AI agent configuration file.
 ```python
 @dataclass
 class AgentConfigFile:
-    path: str            # Path to the file
+    path: str            # Path to file
     agent_type: str      # "claude-code", "cursor", "architect", "copilot", "generic"
     exists: bool = True
 ```
@@ -273,7 +319,7 @@ class SecurityTooling:
 
 ## EvidenceBundle
 
-Complete project evidence collection (18 fields). Used by evaluators to determine compliance.
+Complete evidence collection from the project (18 fields). Used by evaluators to determine compliance.
 
 ```python
 @dataclass
@@ -303,7 +349,7 @@ class EvidenceBundle:
     has_dry_run: bool = False
     has_rollback: bool = False
 
-    # Auditing
+    # Audit
     has_audit_trail: bool = False
     audit_entry_count: int = 0
     has_otel: bool = False
@@ -324,7 +370,7 @@ class EvidenceBundle:
 
 ## Pydantic Models (Configuration)
 
-Configuration models are documented in detail in the [Configuration Guide](/licit-docs/en/docs/v0-1-0/configuration/). Here is the hierarchy:
+The configuration models are documented in detail in the [Configuration Guide](/licit-docs/en/docs/configuration/). Here is the hierarchy:
 
 ```
 LicitConfig (root)

@@ -2,21 +2,28 @@
 import { getCollection, render } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import { getTranslations } from '../../i18n/utils';
-import { getDocSlug, getLatestVersion } from '../../config/versions';
+import { getDocSlug, getLatestVersion, getVersionFromDocId } from '../../config/versions';
 
 export async function getStaticPaths() {
   const allDocs = await getCollection('docs');
-  return allDocs.map((entry) => ({
-    params: { slug: getDocSlug(entry.id) },
-    props: { entry },
-  }));
+  const latest = getLatestVersion();
+
+  return allDocs.map((entry) => {
+    const isLatest = entry.id.startsWith(latest.id + '/');
+    const slug = isLatest ? getDocSlug(entry.id) : entry.id;
+
+    return {
+      params: { slug },
+      props: { entry },
+    };
+  });
 }
 
 const lang = 'es' as const;
 const t = getTranslations(lang);
 const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
-const latest = getLatestVersion();
+const version = getVersionFromDocId(entry.id);
 ---
 
 <DocsLayout
@@ -24,7 +31,7 @@ const latest = getLatestVersion();
   description={entry.data.description}
   lang={lang}
   headings={headings}
-  versionLabel={latest.label}
+  versionLabel={version?.label ?? getLatestVersion().label}
   t={t.docs_page}
 >
   <Content />

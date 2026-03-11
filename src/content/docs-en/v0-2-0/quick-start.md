@@ -1,10 +1,10 @@
 ---
 title: "Quick Start"
-description: "Guide to get licit up and running in your project in 5 minutes."
+description: "Guide to install and set up licit in your project in 5 minutes."
 order: 2
 ---
 
-Guide to get licit up and running in your project in 5 minutes.
+Guide to get licit running in your project in 5 minutes.
 
 ---
 
@@ -19,7 +19,7 @@ pip install licit-ai-cli
 Verify:
 ```bash
 licit --version
-# licit, version 0.1.0
+# licit, version 0.2.0
 ```
 
 ---
@@ -98,8 +98,32 @@ Add sensitive data to `.gitignore`:
 ```gitignore
 .licit/provenance.jsonl
 .licit/fria-data.json
-.licit/signing-key
+.licit/.signing-key
 ```
+
+---
+
+## 6. Track Code Provenance
+
+```bash
+licit trace                      # Analyze entire git history
+licit trace --since 2026-01-01   # From a specific date
+licit trace --stats              # Show statistics
+licit trace --report             # Generate Markdown report
+```
+
+Example output:
+```
+  Analyzing git history...
+  Records: 45 files analyzed
+  AI-generated: 18 (40.0%)
+  Human-written: 22 (48.9%)
+  Mixed: 5 (11.1%)
+
+  Stored in .licit/provenance.jsonl
+```
+
+The `trace` command analyzes each commit with 6 heuristics (author, message, volume, co-authors, file patterns, time) and classifies each file as `ai`, `human`, or `mixed`.
 
 ---
 
@@ -108,10 +132,7 @@ Add sensitive data to `.gitignore`:
 Once future phases of licit are completed, you will be able to:
 
 ```bash
-# Track code provenance (AI vs human)
-licit trace --stats
-
-# Generate changelog of agent configs
+# Generate agent config changelog
 licit changelog
 
 # Complete impact assessment (FRIA)
@@ -138,11 +159,11 @@ After `licit init`, your project will have:
 
 ```
 my-project/
-├── .licit.yaml          # Configuration (version this)
+├── .licit.yaml          # Configuration (version control)
 ├── .licit/              # Internal data
-│   ├── provenance.jsonl # Traceability (DO NOT version)
-│   ├── changelog.md     # Config changelog
-│   ├── fria-data.json   # FRIA data (DO NOT version)
+│   ├── provenance.jsonl # Traceability (DO NOT version control)
+│   ├── changelog.md     # Agent config changelog
+│   ├── fria-data.json   # FRIA data (DO NOT version control)
 │   ├── fria-report.md   # FRIA report
 │   ├── annex-iv.md      # Annex IV documentation
 │   └── reports/         # Generated reports
@@ -159,7 +180,7 @@ my-project/
 | `licit status` | Shows status and connected sources |
 | `licit connect <name>` | Enables/disables a connector |
 | `licit trace` | Tracks code provenance |
-| `licit changelog` | Generates changelog of agent configs |
+| `licit changelog` | Generates agent config changelog |
 | `licit fria` | Fundamental rights impact assessment |
 | `licit annex-iv` | EU AI Act technical documentation |
 | `licit report` | Unified compliance report |
@@ -170,4 +191,4 @@ Global options: `--version`, `--config PATH`, `--verbose`, `--help`
 
 ---
 
-For more detail, see the [full documentation](/licit-docs/en/docs/v0-1-0/introduction/).
+For more details, see the [full documentation](/licit-docs/en/docs/introduction/).
