@@ -13,9 +13,13 @@ const t = getTranslations(lang);
 const latest = getLatestVersion();
 
 const allDocs = await getCollection('docs-en');
-const docs = allDocs
-  .filter((doc) => doc.id.startsWith(latest.id + '/'))
-  .sort((a, b) => a.data.order - b.data.order);
+
+const docsByVersion = VERSIONS.map((v) => ({
+  version: v,
+  docs: allDocs
+    .filter((doc) => doc.id.startsWith(v.id + '/'))
+    .sort((a, b) => a.data.order - b.data.order),
+}));
 ---
 
 <Layout
@@ -40,11 +44,11 @@ const docs = allDocs
         </div>
         <div class="version-box">
           <label class="version-label">{t.docs_page.version_label}</label>
-          <select class="version-select">
+          <select class="version-select" id="version-select">
             {
               VERSIONS.map((v) => (
                 <option value={v.id} selected={v.latest}>
-                  {v.label}
+                  {v.label}{v.latest ? ' (latest)' : ''}
                 </option>
               ))
             }
@@ -54,17 +58,23 @@ const docs = allDocs
 
       <div class="docs-grid">
         {
-          docs.map((doc) => {
-            const slug = getDocSlug(doc.id);
-            return (
-              <DocCard
-                title={doc.data.title}
-                description={doc.data.description}
-                href={getDocUrl(lang, slug)}
-                readMore={t.docs_page.read_more}
-              />
-            );
-          })
+          docsByVersion.map(({ version, docs }) =>
+            docs.map((doc) => {
+              const slug = getDocSlug(doc.id);
+              const href = version.latest
+                ? getDocUrl(lang, slug)
+                : getDocUrl(lang, `${version.id}/${slug}`);
+              return (
+                <DocCard
+                  title={doc.data.title}
+                  description={doc.data.description}
+                  href={href}
+                  readMore={t.docs_page.read_more}
+                  data-version={version.id}
+                />
+              );
+            })
+          )
         }
       </div>
     </div>
@@ -76,14 +86,26 @@ const docs = allDocs
 <script>
   const input = document.querySelector('.doc-search-input') as HTMLInputElement;
   const cards = document.querySelectorAll('.doc-card') as NodeListOf<HTMLElement>;
+  const versionSelect = document.getElementById('version-select') as HTMLSelectElement;
 
-  input?.addEventListener('input', () => {
-    const query = input.value.toLowerCase();
+  function filterCards() {
+    const query = input?.value.toLowerCase() ?? '';
+    const selectedVersion = versionSelect?.value ?? '';
+
     cards.forEach((card) => {
       const text = card.getAttribute('data-search')?.toLowerCase() ?? '';
-      card.style.display = text.includes(query) ? '' : 'none';
+      const version = card.getAttribute('data-version') ?? '';
+      const matchesSearch = text.includes(query);
+      const matchesVersion = version === selectedVersion;
+      card.style.display = matchesSearch && matchesVersion ? '' : 'none';
     });
-  });
+  }
+
+  input?.addEventListener('input', filterCards);
+  versionSelect?.addEventListener('change', filterCards);
+
+  // Initialize: show only latest version
+  filterCards();
 </script>
 
 <style>
